@@ -9,8 +9,11 @@ http://amzn.to/1LGWsLG
 
 from __future__ import print_function
 
+
+import json
+
 # --------------- Helpers that build all of the responses ----------------------
-from PlayerClass import PlayerClass
+from player_class import PlayerClass
 
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
@@ -72,7 +75,7 @@ def handle_session_end_request():
 
 
 def create_player_class(value):
-    return {"playerClass": value}
+    return {"playerClass": value.toJSON()}
 
 
 def choose_class_in_session(intent, session):
@@ -86,6 +89,22 @@ def choose_class_in_session(intent, session):
         card_title, speech_output, reprompt_text, should_end_session))
 
 
+def player_class_details(intent, session):
+    session_attributes = {}
+
+    player_class = json.loads(session['attributes']['playerClass'])
+
+    card_title = "Class Details"
+    speech_output = player_class.name + "has the following attributes." \
+                                        # "Strength is " + player_class.attributes.strenght
+    reprompt_text = "My patience is thin, I shan't ask again"
+
+    should_end_session = False
+
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+
+
 def set_player_class_in_session(intent, session):
     card_title = intent['name']
     session_attributes = {}
@@ -93,11 +112,9 @@ def set_player_class_in_session(intent, session):
 
     if 'Class' in intent['slots']:
         player_class = PlayerClass(intent['slots']['Class']['value'], 1, 1)
-        session_attributes = create_player_class(player_class.name)
+        session_attributes = create_player_class(player_class)
 
-        speech_output = "Then you shall be a " + \
-                        player_class.name + ". Your attributes are " \
-                                            "strength is " + str(player_class.strength)
+        speech_output = "Then you shall be a " + player_class.name
 
         reprompt_text = "I'm becoming impatient"
     else:
@@ -164,6 +181,8 @@ def on_intent(intent_request, session):
         return set_player_class_in_session(intent, session)
     if intent_name == "IAmReadyIntent":
         return choose_class_in_session(intent, session)
+    if intent_name == "ClassDetailsIntent":
+        return player_class_details(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":

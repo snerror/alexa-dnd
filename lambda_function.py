@@ -1,12 +1,3 @@
-"""
-This sample demonstrates a simple skill built with the Amazon Alexa Skills Kit.
-The Intent Schema, Custom Slots, and Sample Utterances for this skill, as well
-as testing instructions are located at http://amzn.to/1LzFrj6
-
-For additional samples, visit the Alexa Skills Kit Getting Started guide at
-http://amzn.to/1LGWsLG
-"""
-
 from __future__ import print_function
 
 
@@ -15,10 +6,10 @@ import json
 # --------------- Helpers that build all of the responses ----------------------
 from player_class import PlayerClass
 
-INTRO_STATE = 'intro'
-MOVEMENT_STATE = 'movement'
-EVENT_STATE = 'movement'
-COMBAT_STATE = 'movement'
+INTRO_PHASE = 'INTRO'
+HERO_PHASE = 'HERO_PHASE'
+EXPLORATION_PHASE = 'EXPLORATION_PHASE'
+VILLAIN_PHASE = 'VILLAIN_PHASE'
 
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session):
@@ -76,10 +67,10 @@ def create_player_class(value):
     return {"playerClass": value.toJSON()}
 
 
-def intro_set_player_class(intent, session):
+def intro_set_player_class_question(intent, session):
     session_attributes = {}
-    card_title = "Class"
-    speech_output = "Shall you be a mighty warrior or a powerful mage?"
+    card_title = "IntroSetPlayerClass"
+    speech_output = "Shall you be a warrior or a wizard?"
     reprompt_text = "My patience is thin, I shan't ask again"
     should_end_session = False
 
@@ -88,23 +79,7 @@ def intro_set_player_class(intent, session):
         speech_output, reprompt_text, should_end_session))
 
 
-def core_class_details(intent, session):
-    session_attributes = {}
-
-    player_class = json.loads(session['attributes']['playerClass'])
-
-    card_title = "Class Details"
-    speech_output = player_class.name + "has the following attributes." \
-                                        # "Strength is " + player_class.attributes.strenght
-    reprompt_text = "My patience is thin, I shan't ask again"
-
-    should_end_session = False
-
-    return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session))
-
-
-def into_set_player_class_confirm(intent, session):
+def into_set_player_class(intent, session):
     card_title = intent['name']
     session_attributes = {}
     should_end_session = False
@@ -114,13 +89,25 @@ def into_set_player_class_confirm(intent, session):
         session_attributes = create_player_class(player_class)
 
         speech_output = "Then you shall be a " + player_class.name
-
         reprompt_text = "I'm becoming impatient"
     else:
-        speech_output = "That is not on the table." \
-                        "Choose again."
-        reprompt_text = "That is not on the table." \
-                        "Choose again."
+        speech_output = "That is not on the table. Choose again."
+        reprompt_text = "That is not on the table. Choose again."
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+
+
+def core_class_details(intent, session):
+    session_attributes = {}
+
+    player_class = json.loads(session['attributes']['playerClass'])
+
+    card_title = "Class Details"
+    speech_output = player_class.name + "has the following attributes."
+    reprompt_text = "My patience is thin, I shan't ask again"
+
+    should_end_session = False
+
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
 
@@ -154,9 +141,9 @@ def on_intent(intent_request, session):
     intent_name = intent_request['intent']['name']
 
     if intent_name == "IntroStartConfirm":
-        return intro_set_player_class(intent, session)
+        return intro_set_player_class_question(intent, session)
     if intent_name == "IntroChooseClass":
-        return into_set_player_class_confirm(intent, session)
+        return into_set_player_class(intent, session)
     if intent_name == "CoreClassDetails":
         return core_class_details(intent, session)
     elif intent_name == "AMAZON.HelpIntent":

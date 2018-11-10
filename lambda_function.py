@@ -103,9 +103,11 @@ def into_set_player_class(intent, session):
 def intro_begin_dungeon(intent, session):
     session_attributes = {}
 
+    room = json.loads(session['attributes']['room'])
+
     card_title = "Begin Dungeon"
 
-    speech_output = "Some intro text"
+    speech_output = "Some intro text. You enter the first room and start looking around. It was " + room['description']
     reprompt_text = "My patience is thin, I shan't ask again"
 
     should_end_session = False

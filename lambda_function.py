@@ -6,10 +6,11 @@ import json
 from player_class import PlayerClass
 
 # Phases
+from room import Room
+
 INTRO_PHASE = 'INTRO'
-HERO_PHASE = 'HERO_PHASE'
+COMBAT_PHASE = 'COMBAT_PHASE'
 EXPLORATION_PHASE = 'EXPLORATION_PHASE'
-VILLAIN_PHASE = 'VILLAIN_PHASE'
 
 # Classes
 WARRIOR = "warrior"
@@ -68,11 +69,12 @@ def handle_session_end_request():
 
 
 def into_choose_player_class(intent, session):
-    session_attributes = {}
+    session_attributes = {"phase": INTRO_PHASE, "room": Room().toJSON()}
+    should_end_session = False
+
     card_title = "IntroSetPlayerClass"
     speech_output = "Shall you be a warrior or a wizard?"
     reprompt_text = "My patience is thin, I shan't ask again"
-    should_end_session = False
 
     return build_response(session_attributes, build_speechlet_response(
         card_title,
@@ -86,9 +88,10 @@ def into_set_player_class(intent, session):
 
     if 'Class' in intent['slots']:
         player_class = PlayerClass(intent['slots']['Class']['value'])
-        session_attributes = {"player": player_class.toJSON()}
+        session_attributes = {"phase": INTRO_PHASE, "room": session['attributes']['room'],
+                              "player": player_class.toJSON()}
 
-        speech_output = "Welcome to our world young " + player_class.class_name
+        speech_output = "Welcome to our world young " + player_class.class_name + ". Are you ready to begin?"
         reprompt_text = "I'm becoming impatient"
     else:
         speech_output = "That is not on the table. Choose again."
@@ -97,15 +100,28 @@ def into_set_player_class(intent, session):
         card_title, speech_output, reprompt_text, should_end_session))
 
 
+def intro_begin_dungeon(intent, session):
+    session_attributes = {}
+
+    card_title = "Begin Dungeon"
+
+    speech_output = "Some intro text"
+    reprompt_text = "My patience is thin, I shan't ask again"
+
+    should_end_session = False
+
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+
+
 def core_player_details(intent, session):
     session_attributes = {}
 
     player = json.loads(session['attributes']['player'])
-    print(player)
 
     card_title = "Class Details"
     speech_output = "The " + player['class_name'] + " has the following attributes:" \
-                    "Health: " + str(player['hp']) + \
+                                                    "Health: " + str(player['hp']) + \
                     ". AC: " + str(player['ac']) + \
                     ". Surge: " + str(player['surge'])
     reprompt_text = "My patience is thin, I shan't ask again"
@@ -147,7 +163,9 @@ def on_intent(intent_request, session):
         return into_choose_player_class(intent, session)
     if intent_name == "IntroChooseClass":
         return into_set_player_class(intent, session)
-    if intent_name == "CoreClassDetails":
+    if intent_name == "IntroBeginDungeon":
+        return intro_begin_dungeon(intent, session)
+    if intent_name == "CorePlayerDetails":
         return core_player_details(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()

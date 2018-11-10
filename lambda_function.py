@@ -101,7 +101,11 @@ def into_set_player_class(intent, session):
 
 
 def intro_begin_dungeon(intent, session):
-    session_attributes = {}
+    session_attributes = {
+        "phase": INTRO_PHASE,
+        "room": session['attributes']['room'],
+        "player": session['attributes']['player']
+    }
 
     room = json.loads(session['attributes']['room'])
 
@@ -133,6 +137,50 @@ def core_player_details(intent, session):
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, should_end_session))
 
+
+def movement(intent, session):
+    session_attributes = {
+        "phase": EXPLORATION_PHASE,
+        "room": session['attributes']['room'],
+        "player": session['attributes']['player']
+    }
+    should_end_session = False
+    card_title = "movement"
+
+    room = json.loads(session['attributes']['room'])
+
+    if 'Direction' in intent['slots']:
+        direction = intent['slots']['Direction']['value']
+        check_direction = movement_checker(direction, room['open'])
+
+        if check_direction is False:
+            speech_output = "You hit a wall."
+            reprompt_text = "You hit a wall."
+        else:
+            speech_output = "You move " + direction
+            reprompt_text = "I'm becoming impatient"
+
+    else:
+        speech_output = "That is not on the table. Choose again."
+        reprompt_text = "That is not on the table. Choose again."
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, should_end_session))
+
+
+def movement_checker(direction, available_movement):
+    if available_movement == 7:
+        return True
+
+    if direction == 'left' and available_movement > 4:
+        return True
+
+    if direction == 'right' and available_movement % 2 == 1:
+        return True
+
+    if direction == 'forward' and (available_movement == 2 or available_movement == 3 or available_movement == 6):
+        return True
+
+    return False
 
 # --------------- Events ------------------
 
@@ -169,6 +217,8 @@ def on_intent(intent_request, session):
         return intro_begin_dungeon(intent, session)
     if intent_name == "CorePlayerDetails":
         return core_player_details(intent, session)
+    if intent_name == 'Movement':
+        return movement(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":

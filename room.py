@@ -3,7 +3,7 @@ import json
 
 class Room:
     def __init__(self):
-        self.open = 0
+        self.open = 1
         self.description = 'some room'
 
     def toJSON(self):

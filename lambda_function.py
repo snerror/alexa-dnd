@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import json
+import requests
 
 # --------------- Helpers that build all of the responses ----------------------
 from player_class import PlayerClass
@@ -68,11 +69,11 @@ def handle_session_end_request():
         card_title, speech_output, None, should_end_session))
 
 
-def into_choose_player_class(intent, session):
-    session_attributes = {"phase": INTRO_PHASE, "room": Room().toJSON()}
+def set_player_class_question(intent, session):
+    session_attributes = {}
     should_end_session = False
 
-    card_title = "IntroSetPlayerClass"
+    card_title = "SetPlayerClass"
     speech_output = "Shall you be a warrior or a wizard?"
     reprompt_text = "My patience is thin, I shan't ask again"
 
@@ -81,17 +82,17 @@ def into_choose_player_class(intent, session):
         speech_output, reprompt_text, should_end_session))
 
 
-def into_set_player_class(intent, session):
+def into_set_player_class(intent):
     card_title = intent['name']
     session_attributes = {}
     should_end_session = False
 
     if 'Class' in intent['slots']:
-        player_class = PlayerClass(intent['slots']['Class']['value'])
-        session_attributes = {"phase": INTRO_PHASE, "room": session['attributes']['room'],
-                              "player": player_class.toJSON()}
+        url = 'http://172.104.224.219:8080/player/class/rogue'
+        response = requests.post(url)
+        print(response)
 
-        speech_output = "Welcome to our world young " + player_class.class_name + ". Are you ready to begin?"
+        speech_output = "Welcome to our world young . Are you ready to begin?"
         reprompt_text = "I'm becoming impatient"
     else:
         speech_output = "That is not on the table. Choose again."
@@ -210,7 +211,7 @@ def on_intent(intent_request, session):
     intent_name = intent_request['intent']['name']
 
     if intent_name == "IntroStartConfirm":
-        return into_choose_player_class(intent, session)
+        return set_player_class_question(intent, session)
     if intent_name == "IntroChooseClass":
         return into_set_player_class(intent, session)
     if intent_name == "IntroBeginDungeon":

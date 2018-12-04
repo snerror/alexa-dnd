@@ -54,9 +54,7 @@ const API_ENDPOINT = 'http://172.104.224.219:8080';
 
 const handlers = {
     'LaunchRequest': function () {
-        let speechOutput = 'Welcome to Dungeons and Dragons on Alexa, adventure awaits.' +
-            'You must choose between 3 classes, in order to begin the game.' +
-            'Shall you be a fighter, rogue or cleric?';
+        let speechOutput = 'Welcome to Dungeons and Dragons on Alexa, adventure awaits. You must choose between 3 classes, in order to begin the game. Shall you be a fighter, rogue or cleric?';
 
         this.response.speak(speechOutput).listen(IMPATIENT_REPROMPT);
         this.emit(':responseReady');
@@ -72,7 +70,23 @@ const handlers = {
             });
 
             resp.on('end', () => {
-                this.response.speak(JSON.parse(data).alexaResponsevalue).listen(IMPATIENT_REPROMPT);
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
+                this.emit(':responseReady');
+            });
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+        });
+    },
+    'GetPlayerDetails': function () {
+        http.get(API_ENDPOINT + '/player', (resp) => {
+            let data = '';
+
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            resp.on('end', () => {
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
                 this.emit(':responseReady');
             });
         }).on("error", (err) => {
@@ -90,22 +104,46 @@ const handlers = {
             });
 
             resp.on('end', () => {
-                this.response.speak(JSON.parse(data).alexaResponsevalue).listen(IMPATIENT_REPROMPT);
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
                 this.emit(':responseReady');
             });
         }).on("error", (err) => {
             console.log("Error: " + err.message);
         });
     },
-    'GetNewFactIntent': function () {
-        const factArr = data;
-        const factIndex = Math.floor(Math.random() * factArr.length);
-        const randomFact = factArr[factIndex];
-        const speechOutput = GET_FACT_MESSAGE + randomFact;
+    'PlayerAttack': function () {
+        const ability = this.event.request.intent.slots.Ability.value;
 
-        this.response.cardRenderer(SKILL_NAME, randomFact);
-        this.response.speak(speechOutput);
-        this.emit(':responseReady');
+        http.get(API_ENDPOINT + '/player/attack/' + ability, (resp) => {
+            let data = '';
+
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            resp.on('end', () => {
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
+                this.emit(':responseReady');
+            });
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+        });
+    },
+    'ResetDungeon': function () {
+        http.get(API_ENDPOINT + '/reset', (resp) => {
+            let data = '';
+
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            resp.on('end', () => {
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
+                this.emit(':responseReady');
+            });
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+        });
     },
     'AMAZON.HelpIntent': function () {
         const speechOutput = HELP_MESSAGE;

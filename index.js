@@ -114,7 +114,23 @@ const handlers = {
     'PlayerAttack': function () {
         const ability = this.event.request.intent.slots.Ability.value;
 
-        http.get(API_ENDPOINT + '/player/attack/' + ability, (resp) => {
+        http.get(API_ENDPOINT + '/player/' + ability + '/attack', (resp) => {
+            let data = '';
+
+            resp.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            resp.on('end', () => {
+                this.response.speak(JSON.parse(data).alexaResponse).listen(IMPATIENT_REPROMPT);
+                this.emit(':responseReady');
+            });
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+        });
+    },
+    'PlayerAbility': function () {
+        http.get(API_ENDPOINT + '/player/ability', (resp) => {
             let data = '';
 
             resp.on('data', (chunk) => {
